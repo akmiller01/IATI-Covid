@@ -49,3 +49,29 @@ covid_related.split.long$usd.value[which(is.na(covid_related.split.long$usd.valu
 covid_related.split.long[,c("usd.disbursement", "max_count", "count", "transaction.id", "id", "time")] = NULL
 
 fwrite(covid_related.split.long,"covid_transaction_by_sector.csv")
+
+search_terms = unique(covid_related.split.long$iati.identifier)
+
+search_fields = c(
+  "iati_identifier"
+)
+
+search_query = ""
+search_grid = expand.grid(search_fields, search_terms, stringsAsFactors = F)
+for(i in 1:nrow(search_grid)){
+  row = search_grid[i,]
+  query = paste0(row[1], ':"', row[2], '"')
+  if(i != nrow(search_grid)){
+    query = paste0(query, " OR ")
+  }
+  search_query = paste0(search_query, query)
+}
+
+text_search_url = paste0(
+  'https://iati.cloud/search/activity?q=(',
+  search_query,
+  ')&wt=xslt&tr=activity-csv.xsl&rows=5000000' 
+)
+
+text_search_activities = read.csv(URLencode(text_search_url),as.is=T)
+fwrite(text_search_activities,"datastore_api_covid_results.csv")

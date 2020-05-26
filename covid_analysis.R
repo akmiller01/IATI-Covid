@@ -8,8 +8,6 @@ setwd(wd)
 
 agg <- fread("iati_unfiltered_agg.csv")
 agg = subset(agg, secondary_reporter %in% c("0","false"))
-agg$tag_code = ""
-agg$tag_narrative = ""
 
 covid_related = subset(
   agg,
