@@ -13,7 +13,7 @@ if __name__ == '__main__':
     os.mkdir("/home/alex/git/IATI-Covid/sep/")
 
     # Where to look for saved IATI XML via registry-refresher
-    rootdir = '/home/alex/git/IATI-Covid/data'
+    rootdir = '/home/alex/git/IATI-Registry-Refresher/data'
 
     # Predefined header names
     header = iatiflat.header
