@@ -1,4 +1,4 @@
-list.of.packages <- c("data.table", "anytime", "Hmisc","reshape2","splitstackshape")
+list.of.packages <- c("data.table", "anytime", "Hmisc","reshape2","splitstackshape", "stringdist")
 new.packages <- list.of.packages[!(list.of.packages %in% installed.packages()[,"Package"])]
 if(length(new.packages)) install.packages(new.packages)
 lapply(list.of.packages, require, character.only=T)
@@ -13,18 +13,52 @@ incom = c("11")
 agg <- fread("iati_unfiltered_agg.csv",na.strings="")
 agg = subset(agg, secondary_reporter %in% c("0","false"))
 
+agg$glide_narr_dist = stringdist("EP-2020-000012-001",agg$humanitarian_scope_narrative)
+agg$glide_code_dist = stringdist("EP-2020-000012-001",agg$humanitarian_scope_code)
+
 covid_related = subset(
   agg,
   grepl("covid-19", activity_title, ignore.case=T) |
     grepl("covid-19", activity_description, ignore.case=T) |
     grepl("covid-19", transaction_description_narrative, ignore.case=T) |
-    humanitarian_scope_narrative == "EP-2020-000012-001" |
     humanitarian_scope_code == "EP-2020-000012-001" |
-    humanitarian_scope_narrative == "HCOVD20" |
     humanitarian_scope_code == "HCOVD20" |
-    tag_code == "COVID-19" |
-    tag_narrative == "COVID-19"
+    tag_code == "COVID-19"
 )
+covid_related_activities = unique(covid_related$iati_identifier)
+
+near_covid = subset(
+  agg,
+  grepl("covid", activity_title, ignore.case=T) |
+    grepl("covid", activity_description, ignore.case=T) |
+    grepl("covid", transaction_description_narrative, ignore.case=T) |
+    grepl("corona", activity_title, ignore.case=T) |
+    grepl("corona", activity_description, ignore.case=T) |
+    grepl("corona", transaction_description_narrative, ignore.case=T) |
+    grepl("cov19", activity_title, ignore.case=T) |
+    grepl("cov19", activity_description, ignore.case=T) |
+    grepl("cov19", transaction_description_narrative, ignore.case=T) |
+    grepl("covid", humanitarian_scope_code, ignore.case=T) |
+    grepl("covid", humanitarian_scope_narrative, ignore.case=T) |
+    grepl("covid", tag_code, ignore.case=T) |
+    grepl("covid", tag_narrative, ignore.case=T) |
+    grepl("corona", humanitarian_scope_code, ignore.case=T) |
+    grepl("corona", humanitarian_scope_narrative, ignore.case=T) |
+    grepl("corona", tag_code, ignore.case=T) |
+    grepl("corona", tag_narrative, ignore.case=T) |
+    grepl("cov19", humanitarian_scope_code, ignore.case=T) |
+    grepl("cov19", humanitarian_scope_narrative, ignore.case=T) |
+    grepl("cov19", tag_code, ignore.case=T) |
+    grepl("cov19", tag_narrative, ignore.case=T) |
+    glide_code_dist==1
+)
+near_covid_activities = unique(near_covid$iati_identifier)
+new_ids = setdiff(near_covid_activities,covid_related_activities)
+length(new_ids)
+keep = c("iati_identifier","publisher","year","transaction_date","activity_title","activity_description","transaction_description_narrative",
+         "humanitarian_scope_code", "humanitarian_scope_narrative","tag_code","tag_narrative"
+         )
+fwrite(unique(near_covid[which(near_covid$iati_identifier %in% new_ids),keep,with=F]),"near_covid.csv")
 
 # BASIC QUESTIONS
 # Which IATI publishers are currently publishing COVID-19 related activities/transactions? Which elements are they using?
@@ -53,7 +87,7 @@ covid_related$using_tag[which(is.na(covid_related$using_tag))] = FALSE
 using_tab = covid_related[,.(
   using_title = any(using_title),
   using_description = any(using_description),
-  using_transaction_description = any(using_description),
+  using_transaction_description = any(using_transaction_description),
   using_glide = any(using_glide),
   using_appeal = any(using_appeal),
   using_tag = any(using_tag)
@@ -81,25 +115,58 @@ fwrite(members,"members_using.csv",na="")
 #   Pick one specific member. Use as an example of publishing good data?
 #   Can we track progress over time for publishers? Run a query to show increase of publishers and activities over time.
 # Number of activities by reporting organization type
-org_type_tab = covid_related[,.(activity_count=length(unique(.SD$iati_identifier))),by=.(reporting_org_type)]
+org_type_tab = covid_related[,.(activity_count=length(unique(.SD$iati_identifier)), org_count=length(unique(.SD$reporting_org_name))),by=.(reporting_org_type)]
 org_types = fread("../OrganisationType.csv")
 org_types = org_types[,c("code","name")]
 names(org_types) = c("reporting_org_type","reporting_org_type_name")
 org_type_tab$reporting_org_type = as.numeric(org_type_tab$reporting_org_type)
 org_type_tab = merge(org_type_tab,org_types)
 fwrite(org_type_tab,"org_type_tab.csv")
+
+all_org_type_tab = agg[,.(activity_count=length(unique(.SD$iati_identifier)), org_count=length(unique(.SD$reporting_org_name))),by=.(reporting_org_type)]
+all_org_type_tab$reporting_org_type = as.numeric(all_org_type_tab$reporting_org_type)
+all_org_type_tab = merge(all_org_type_tab,org_types)
+fwrite(all_org_type_tab,"all_org_type_tab.csv")
 # 
 # MORE DETAILED QUESTIONS
 # How much money has been allocated to COVID-19 up to now? Track progress over the year.
 covid_related_trans = covid_related
 covid_related_trans$transaction_date = anydate(covid_related_trans$transaction_date)
 covid_related_trans$using_transaction_description = grepl("covid-19", covid_related_trans$transaction_description_narrative, ignore.case=T)
-covid_related_trans = subset(covid_related_trans,transaction_date>=as.Date("2020-03-01") | using_transaction_description)
-sum(subset(covid_related_trans, transaction_type %in% disb)$usd_disbursement,na.rm=T)
+covid_related_trans = subset(covid_related_trans,using_transaction_description)
+covid_related_trans$usd_disbursement = as.numeric(covid_related_trans$usd_disbursement)
 sum(subset(covid_related_trans, transaction_type %in% comm)$usd_disbursement,na.rm=T)
+sum(subset(covid_related_trans, transaction_type %in% disb)$usd_disbursement,na.rm=T)
 # Money allocated to COVID-19 = the money in transactions that are identified as COVID-19-related (can’t be assume that all transactions within an activity are COVID-19-related)
 # Could assess total commitments/disbursements in COVID-19-related activities and transactions vs total commitments/disbursement for the transactions we can definitively say are COVID-19-related (because the specific transactions are identified as COVID-19-related)
-# Which activities and who is involved? What are the implementing agencies and how many activities are being implemented by each? What are the implementing agencies by recipient country?
+covid_related$usd_disbursement = as.numeric(covid_related$usd_disbursement)
+sum(subset(covid_related, transaction_type %in% comm)$usd_disbursement,na.rm=T)
+sum(subset(covid_related, transaction_type %in% disb)$usd_disbursement,na.rm=T)
+# Which activities and who is involved? 
+covid_participants = covid_related
+covid_participants$transaction.id = c(1:nrow(covid_participants))
+names(covid_participants) = gsub("_",".",names(covid_participants))
+original_names = names(covid_participants)
+covid_participants.split = cSplit(covid_participants,c("participating.org.ref","participating.org.type","participating.org.role","participating.org.name"),",")
+new_names = setdiff(names(covid_participants.split),original_names)
+covid_participants.split.long = reshape(covid_participants.split, varying=new_names, direction="long", sep="_")
+covid_participants.split.long[ , `:=`( max_count = .N , count = 1:.N ) , by = transaction.id ]
+covid_participants.split.long=subset(covid_participants.split.long, !is.na(participating.org.role) | max_count==1 | count==1)
+covid_participants.split.long[,c("max_count", "count", "transaction.id", "id", "time")] = NULL
+covid_participants_unique = unique(covid_participants.split.long[,c("iati.identifier","participating.org.ref","participating.org.type","participating.org.role","participating.org.name")])
+org_roles = fread("../OrganisationRole.csv")
+org_roles = org_roles[,c("code","name")]
+names(org_roles) = c("participating.org.role","participating.org.role.name")
+covid_participants_unique$participating.org.role = as.numeric(covid_participants_unique$participating.org.role)
+covid_participants_unique = merge(covid_participants_unique,org_roles)
+fwrite(covid_participants_unique,"whos_involved.csv")
+# What are the implementing agencies and how many activities are being implemented by each? 
+implementing = subset(covid_participants_unique,participating.org.role.name=="Implementing")
+implementing$participating.org.name[which(is.na(implementing$participating.org.name))] = implementing$participating.org.ref[which(is.na(implementing$participating.org.name))]
+implementing_tab = implementing[,.(activity_count=length(unique(.SD$iati.identifier))),by=.(participating.org.name)]
+implementing_tab = implementing_tab[order(-implementing_tab$activity_count),]
+fwrite(implementing_tab,"implementing_activity_count.csv")
+# What are the implementing agencies by recipient country?
 #   Which sectors are COVID-19-related activities/transactions targeting?
 #   Qualitative analysis comparing the activities!
 #   Try to assess which activities appear to be 100% COVID-19-related and which are clearly not (e.g. UNHCR activities)
