@@ -41,4 +41,4 @@ if __name__ == '__main__':
     # Once individual (headless) CSVs are written for each donor. It's an easy step to concatenate them into one large document.
     # You may want to consider doing this in code rather than saving each donor's CSVs to disk, but I found this useful for
     # saving progress physically in case the conversion process gets interrupted
-    os.system("cat /home/alex/git/IATI-Covid/sep/*.csv > /home/alex/git/IATI-Covid/output/iati_unfiltered_agg_apr_06_2020.csv")
+    os.system("cat /home/alex/git/IATI-Covid/sep/*.csv > /home/alex/git/IATI-Covid/output/iati_unfiltered_agg.csv")

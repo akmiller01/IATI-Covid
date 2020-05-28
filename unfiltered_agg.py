@@ -201,6 +201,12 @@ class IatiFlat(object):
                 defaults["default-currency"] = "GBP"
 
             has_transactions = "transaction" in child_tags
+            has_budget = "budget" in child_tags
+            if not has_transactions and not has_budget:
+                activity_date = default_first(activity.xpath("activity-date/@iso-date"))
+                year = activity_date[:4] if activity_date is not None else None
+                row = [year, activity_date, None, None, None, None, "Activity", None, iati_identifier, reporting_org_name, reporting_org_ref, reporting_org_type, secondary_reporter, humanitarian, activity_sector_codes, activity_sector_percentages, activity_sector_vocabulary, recipient_country_codes, recipient_country_percentages, finance_type_code, humanitarian_scope_narrative, humanitarian_scope_code, activity_title, activity_description, None, tag_code, tag_narrative, participating_org_name, participating_org_ref, participating_org_type, participating_org_role]
+                output.append(row)
             if has_transactions:
                 transactions = activity.findall("transaction")
 
@@ -257,14 +263,14 @@ class IatiFlat(object):
                             converted_value = convert_usd(value, year, currency, self.dictionaries["ratedf"])
                         else:
                             pdb.set_trace()
-                        # "year", "transaction_date", "budget_period_start", "budget_period_end", "transaction_type", "usd_disbursement", "budget_or_transaction", "budget_type", "iati_identifier", "reporting_org_name", "reporting_org_ref"
-                        row = [year, transaction_date, budget_period_start, budget_period_end, transaction_type_code, converted_value, b_or_t, budget_type, iati_identifier, reporting_org_name, reporting_org_ref, reporting_org_type, secondary_reporter, humanitarian, transaction_sector_code, transaction_sector_percentage, transaction_sector_vocabulary, transaction_country_code, transaction_country_percentage, finance_type_code, humanitarian_scope_narrative, humanitarian_scope_code, activity_title, activity_description, transaction_description_narrative, tag_code, tag_narrative, participating_org_name, participating_org_ref, participating_org_type, participating_org_role]
-                        output.append(row)
+                    else:
+                        converted_value = "0"
+                    row = [year, transaction_date, budget_period_start, budget_period_end, transaction_type_code, converted_value, b_or_t, budget_type, iati_identifier, reporting_org_name, reporting_org_ref, reporting_org_type, secondary_reporter, humanitarian, transaction_sector_code, transaction_sector_percentage, transaction_sector_vocabulary, transaction_country_code, transaction_country_percentage, finance_type_code, humanitarian_scope_narrative, humanitarian_scope_code, activity_title, activity_description, transaction_description_narrative, tag_code, tag_narrative, participating_org_name, participating_org_ref, participating_org_type, participating_org_role]
+                    output.append(row)
 
             # Loop through budgets, and capture as close equivalents as we can to transactions
-            budget_output = []
-            has_budget = "budget" in child_tags
             if has_budget:
+                budget_output = []
                 budgets = activity.findall("budget")
 
                 for budget in budgets:
@@ -307,10 +313,12 @@ class IatiFlat(object):
                                     converted_value = convert_usd(value, year, currency, self.dictionaries["ratedf"])
                                 else:
                                     pdb.set_trace()
-                                # "year", "transaction_date", "budget_period_start", "budget_period_end", "transaction_type", "usd_disbursement", "budget_or_transaction", "budget_type", "iati_identifier", "reporting_org_name", "reporting_org_ref"
-                                row = [year, None, transaction_date, transaction_date_end, transaction_type_code, converted_value, b_or_t, budget_type, iati_identifier, reporting_org_name, reporting_org_ref, reporting_org_type, secondary_reporter, humanitarian, None, None, None, recipient_country_codes, recipient_country_percentages, defaults["default-finance-type"], humanitarian_scope_narrative, humanitarian_scope_code, activity_title, activity_description, None, tag_code, tag_narrative, participating_org_name, participating_org_ref, participating_org_type, participating_org_role]
-                                meta = {"row": row, "time_range": time_range, "budget_type": budget_type}
-                                budget_output.append(meta)
+                            else:
+                                converted_value = "0"
+
+                            row = [year, None, transaction_date, transaction_date_end, transaction_type_code, converted_value, b_or_t, budget_type, iati_identifier, reporting_org_name, reporting_org_ref, reporting_org_type, secondary_reporter, humanitarian, None, None, None, recipient_country_codes, recipient_country_percentages, defaults["default-finance-type"], humanitarian_scope_narrative, humanitarian_scope_code, activity_title, activity_description, None, tag_code, tag_narrative, participating_org_name, participating_org_ref, participating_org_type, participating_org_role]
+                            meta = {"row": row, "time_range": time_range, "budget_type": budget_type}
+                            budget_output.append(meta)
             if len(budget_output) > 1:
                 overlaps = []
                 spoiled = False
