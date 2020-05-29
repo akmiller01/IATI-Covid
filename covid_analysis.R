@@ -13,8 +13,8 @@ incom = c("11")
 agg <- fread("iati_unfiltered_agg.csv",na.strings="")
 agg = subset(agg, secondary_reporter %in% c("0","false"))
 
-# agg$glide_narr_dist = stringdist("EP-2020-000012-001",agg$humanitarian_scope_narrative)
-# agg$glide_code_dist = stringdist("EP-2020-000012-001",agg$humanitarian_scope_code)
+agg$glide_narr_dist = stringdist("EP-2020-000012-001",agg$humanitarian_scope_narrative)
+agg$glide_code_dist = stringdist("EP-2020-000012-001",agg$humanitarian_scope_code)
 
 covid_related = subset(
   agg,
@@ -32,41 +32,45 @@ dportal$iati.identifier = sapply(dportal$iati.identifier,URLdecode)
 dportal_activities = unique(dportal$iati.identifier)
 new_in_dportal = setdiff(dportal_activities,covid_related_activities)
 new_in_registry = setdiff(covid_related_activities,dportal_activities)
-new = subset(dportal,iati.identifier %in% new_in_dportal)
+new.d = subset(dportal,iati.identifier %in% new_in_dportal)
 new.r = subset(covid_related,iati_identifier %in% new_in_registry)
-# 
-# near_covid = subset(
-#   agg,
-#   grepl("covid", activity_title, ignore.case=T) |
-#     grepl("covid", activity_description, ignore.case=T) |
-#     grepl("covid", transaction_description_narrative, ignore.case=T) |
-#     grepl("corona", activity_title, ignore.case=T) |
-#     grepl("corona", activity_description, ignore.case=T) |
-#     grepl("corona", transaction_description_narrative, ignore.case=T) |
-#     grepl("cov19", activity_title, ignore.case=T) |
-#     grepl("cov19", activity_description, ignore.case=T) |
-#     grepl("cov19", transaction_description_narrative, ignore.case=T) |
-#     grepl("covid", humanitarian_scope_code, ignore.case=T) |
-#     grepl("covid", humanitarian_scope_narrative, ignore.case=T) |
-#     grepl("covid", tag_code, ignore.case=T) |
-#     grepl("covid", tag_narrative, ignore.case=T) |
-#     grepl("corona", humanitarian_scope_code, ignore.case=T) |
-#     grepl("corona", humanitarian_scope_narrative, ignore.case=T) |
-#     grepl("corona", tag_code, ignore.case=T) |
-#     grepl("corona", tag_narrative, ignore.case=T) |
-#     grepl("cov19", humanitarian_scope_code, ignore.case=T) |
-#     grepl("cov19", humanitarian_scope_narrative, ignore.case=T) |
-#     grepl("cov19", tag_code, ignore.case=T) |
-#     grepl("cov19", tag_narrative, ignore.case=T) |
-#     glide_code_dist==1
-# )
-# near_covid_activities = unique(near_covid$iati_identifier)
-# new_ids = setdiff(near_covid_activities,covid_related_activities)
-# length(new_ids)
-# keep = c("iati_identifier","publisher","year","transaction_date","activity_title","activity_description","transaction_description_narrative",
-#          "humanitarian_scope_code", "humanitarian_scope_narrative","tag_code","tag_narrative"
-#          )
-# fwrite(unique(near_covid[which(near_covid$iati_identifier %in% new_ids),keep,with=F]),"near_covid.csv")
+
+near_covid = subset(
+  agg,
+  grepl("covid", activity_title, ignore.case=T) |
+    grepl("covid", activity_description, ignore.case=T) |
+    grepl("covid", transaction_description_narrative, ignore.case=T) |
+    grepl("corona", activity_title, ignore.case=T) |
+    grepl("corona", activity_description, ignore.case=T) |
+    grepl("corona", transaction_description_narrative, ignore.case=T) |
+    grepl("cov19", activity_title, ignore.case=T) |
+    grepl("cov19", activity_description, ignore.case=T) |
+    grepl("cov19", transaction_description_narrative, ignore.case=T) |
+    grepl("covid", humanitarian_scope_code, ignore.case=T) |
+    grepl("covid", humanitarian_scope_narrative, ignore.case=T) |
+    grepl("covid", tag_code, ignore.case=T) |
+    grepl("covid", tag_narrative, ignore.case=T) |
+    grepl("corona", humanitarian_scope_code, ignore.case=T) |
+    grepl("corona", humanitarian_scope_narrative, ignore.case=T) |
+    grepl("corona", tag_code, ignore.case=T) |
+    grepl("corona", tag_narrative, ignore.case=T) |
+    grepl("cov19", humanitarian_scope_code, ignore.case=T) |
+    grepl("cov19", humanitarian_scope_narrative, ignore.case=T) |
+    grepl("cov19", tag_code, ignore.case=T) |
+    grepl("cov19", tag_narrative, ignore.case=T) |
+    glide_code_dist==1
+)
+near_covid_activities = unique(near_covid$iati_identifier)
+new_ids = setdiff(near_covid_activities,covid_related_activities)
+length(new_ids)
+keep = c("iati_identifier","publisher","year","transaction_date","activity_title","activity_description","transaction_description_narrative",
+         "humanitarian_scope_code", "humanitarian_scope_narrative","tag_code","tag_narrative"
+         )
+keep.act = c("iati_identifier","publisher","activity_title","activity_description",
+             "humanitarian_scope_code", "humanitarian_scope_narrative","tag_code","tag_narrative"
+)
+fwrite(unique(near_covid[which(near_covid$iati_identifier %in% new_ids),keep,with=F]),"near_covid.csv")
+fwrite(unique(covid_related[,keep.act,with=F]),"covid_related_activities.csv")
 
 # BASIC QUESTIONS
 # Which IATI publishers are currently publishing COVID-19 related activities/transactions? Which elements are they using?
@@ -145,6 +149,7 @@ covid_related_trans = subset(covid_related_trans,using_transaction_description)
 covid_related_trans$usd_disbursement = as.numeric(covid_related_trans$usd_disbursement)
 sum(subset(covid_related_trans, transaction_type %in% comm)$usd_disbursement,na.rm=T)
 sum(subset(covid_related_trans, transaction_type %in% disb)$usd_disbursement,na.rm=T)
+fwrite(covid_related_trans,"covid_related_transactions.csv")
 # Money allocated to COVID-19 = the money in transactions that are identified as COVID-19-related (can’t be assume that all transactions within an activity are COVID-19-related)
 # Could assess total commitments/disbursements in COVID-19-related activities and transactions vs total commitments/disbursement for the transactions we can definitively say are COVID-19-related (because the specific transactions are identified as COVID-19-related)
 covid_related$usd_disbursement = as.numeric(covid_related$usd_disbursement)

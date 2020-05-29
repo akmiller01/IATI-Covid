@@ -205,7 +205,7 @@ class IatiFlat(object):
             if not has_transactions and not has_budget:
                 activity_date = default_first(activity.xpath("activity-date/@iso-date"))
                 year = activity_date[:4] if activity_date is not None else None
-                row = [year, activity_date, None, None, None, None, "Activity", None, iati_identifier, reporting_org_name, reporting_org_ref, reporting_org_type, secondary_reporter, humanitarian, activity_sector_codes, activity_sector_percentages, activity_sector_vocabulary, recipient_country_codes, recipient_country_percentages, finance_type_code, humanitarian_scope_narrative, humanitarian_scope_code, activity_title, activity_description, None, tag_code, tag_narrative, participating_org_name, participating_org_ref, participating_org_type, participating_org_role]
+                row = [year, activity_date, None, None, None, None, "Activity", None, iati_identifier, reporting_org_name, reporting_org_ref, reporting_org_type, secondary_reporter, humanitarian, activity_sector_codes, activity_sector_percentages, activity_sector_vocabularies, recipient_country_codes, recipient_country_percentages, None, humanitarian_scope_narrative, humanitarian_scope_code, activity_title, activity_description, None, tag_code, tag_narrative, participating_org_name, participating_org_ref, participating_org_type, participating_org_role]
                 output.append(row)
             if has_transactions:
                 transactions = activity.findall("transaction")
@@ -319,49 +319,49 @@ class IatiFlat(object):
                             row = [year, None, transaction_date, transaction_date_end, transaction_type_code, converted_value, b_or_t, budget_type, iati_identifier, reporting_org_name, reporting_org_ref, reporting_org_type, secondary_reporter, humanitarian, None, None, None, recipient_country_codes, recipient_country_percentages, defaults["default-finance-type"], humanitarian_scope_narrative, humanitarian_scope_code, activity_title, activity_description, None, tag_code, tag_narrative, participating_org_name, participating_org_ref, participating_org_type, participating_org_role]
                             meta = {"row": row, "time_range": time_range, "budget_type": budget_type}
                             budget_output.append(meta)
-            if len(budget_output) > 1:
-                overlaps = []
-                spoiled = False
-                keep_indexes = list(range(0, len(budget_output)))
-                # All possible combinations of 2
-                for i in range(0, len(budget_output)):
-                    if i+1 < len(budget_output):
-                        for j in range(i+1, len(budget_output)):
-                            first_budget = budget_output[i]
-                            second_budget = budget_output[j]
-                            if second_budget["time_range"]["end"] <= first_budget["time_range"]["end"] and second_budget["time_range"]["end"] >= first_budget["time_range"]["start"]:
-                                overlaps.append((i, j))
-                                if i in keep_indexes:
-                                    keep_indexes.remove(i)
-                                if j in keep_indexes:
-                                    keep_indexes.remove(j)
-                            elif second_budget["time_range"]["start"] >= first_budget["time_range"]["start"] and second_budget["time_range"]["start"] <= first_budget["time_range"]["end"]:
-                                overlaps.append((i, j))
-                                if i in keep_indexes:
-                                    keep_indexes.remove(i)
-                                if j in keep_indexes:
-                                    keep_indexes.remove(j)
-                if len(overlaps) > 1:
-                    for i, j in overlaps:
-                        # If we've happened to put them back in the queue, take them out
-                        if i in keep_indexes:
-                            keep_indexes.remove(i)
-                        if j in keep_indexes:
-                            keep_indexes.remove(j)
-                        budget1 = budget_output[i]
-                        budget2 = budget_output[j]
-                        # Only keep overlaps if one is revised and one is original
-                        if budget1["budget_type"] == "1" and budget2["budget_type"] == "2":
-                            keep_indexes.append(j)
-                        elif budget1["budget_type"] == "2" and budget2["budget_type"] == "1":
-                            keep_indexes.append(i)
-                        elif budget1["budget_type"] == budget2["budget_type"]:
-                            spoiled = True
-                if not spoiled:
-                    for keep_index in keep_indexes:
-                        output.append(budget_output[keep_index]["row"])
-            elif len(budget_output) == 1:
-                # only one budget
-                output.append(budget_output[0]["row"])
+                if len(budget_output) > 1:
+                    overlaps = []
+                    spoiled = False
+                    keep_indexes = list(range(0, len(budget_output)))
+                    # All possible combinations of 2
+                    for i in range(0, len(budget_output)):
+                        if i+1 < len(budget_output):
+                            for j in range(i+1, len(budget_output)):
+                                first_budget = budget_output[i]
+                                second_budget = budget_output[j]
+                                if second_budget["time_range"]["end"] <= first_budget["time_range"]["end"] and second_budget["time_range"]["end"] >= first_budget["time_range"]["start"]:
+                                    overlaps.append((i, j))
+                                    if i in keep_indexes:
+                                        keep_indexes.remove(i)
+                                    if j in keep_indexes:
+                                        keep_indexes.remove(j)
+                                elif second_budget["time_range"]["start"] >= first_budget["time_range"]["start"] and second_budget["time_range"]["start"] <= first_budget["time_range"]["end"]:
+                                    overlaps.append((i, j))
+                                    if i in keep_indexes:
+                                        keep_indexes.remove(i)
+                                    if j in keep_indexes:
+                                        keep_indexes.remove(j)
+                    if len(overlaps) > 1:
+                        for i, j in overlaps:
+                            # If we've happened to put them back in the queue, take them out
+                            if i in keep_indexes:
+                                keep_indexes.remove(i)
+                            if j in keep_indexes:
+                                keep_indexes.remove(j)
+                            budget1 = budget_output[i]
+                            budget2 = budget_output[j]
+                            # Only keep overlaps if one is revised and one is original
+                            if budget1["budget_type"] == "1" and budget2["budget_type"] == "2":
+                                keep_indexes.append(j)
+                            elif budget1["budget_type"] == "2" and budget2["budget_type"] == "1":
+                                keep_indexes.append(i)
+                            elif budget1["budget_type"] == budget2["budget_type"]:
+                                spoiled = True
+                    if not spoiled:
+                        for keep_index in keep_indexes:
+                            output.append(budget_output[keep_index]["row"])
+                elif len(budget_output) == 1:
+                    # only one budget
+                    output.append(budget_output[0]["row"])
 
         return output
