@@ -120,7 +120,7 @@ transactions = transactions.split.long
 # Sector split
 transactions$generic_sector_code = transactions[,"transaction.sector.code",with=F]
 transactions$generic_sector_percentage = "100"
-transactions$generic_sector_vocabulary = "1"
+transactions$generic_sector_vocabulary = transactions[,"transaction.sector.vocabulary",with=F]
 transactions$generic_sector_percentage[which(is.na(transactions$generic_sector_code))] = transactions$sector.percentage[which(is.na(transactions$generic_sector_code))]
 transactions$generic_sector_vocabulary[which(is.na(transactions$generic_sector_code))] = transactions$sector.vocabulary[which(is.na(transactions$generic_sector_code))]
 transactions$generic_sector_code[which(is.na(transactions$generic_sector_code))] = transactions$sector.code[which(is.na(transactions$generic_sector_code))]
@@ -139,7 +139,9 @@ transactions.split.long$generic.sector.percentage = as.numeric(transactions.spli
 transactions.split.long[ , `:=`( max_count = .N , count = 1:.N ) , by = transaction.id ]
 transactions.split.long=subset(transactions.split.long, !is.na(generic.sector.code) | max_count==1 | count==1)
 transactions.split.long$generic.sector.code = as.character(transactions.split.long$generic.sector.code)
+transactions.split.long$generic.sector.vocabulary[which(is.na(transactions.split.long$generic.sector.vocabulary) & !is.na(transactions.split.long$generic.sector.code))] = "99"
 transactions.split.long$generic.sector.code[which(is.na(transactions.split.long$generic.sector.code))] = "99810"
+transactions.split.long$generic.sector.vocabulary[which(is.na(transactions.split.long$generic.sector.vocabulary))] = "1"
 transactions.split.long$generic.sector.percentage[which(is.na(transactions.split.long$generic.sector.percentage))] = 100
 transactions.split.long$sector.country.split.transaction.value=(transactions.split.long$generic.sector.percentage/100)*transactions.split.long$country.split.transaction.value
 transactions.split.long$sector.country.split.transaction.value[which(is.na(transactions.split.long$sector.country.split.transaction.value))] = transactions.split.long$country.split.transaction.value[which(is.na(transactions.split.long$sector.country.split.transaction.value))]
