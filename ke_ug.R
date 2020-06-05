@@ -70,7 +70,7 @@ single_vocabulary = function(row){
 #     "iati_identifier: (",activity_filter,")",
 #     " AND transaction_date_iso_date:[2020-01-01T00:00:00Z TO *]",
 #     "&fl=",
-#     "iati_identifier,transaction_ref,transaction_humanitarian,transaction_type_code,",
+#     "iati_identifier,transaction_ref,transaction_humanitarian,transaction_type,",
 #     "transaction_date_iso_date,transaction_valu*,transaction_provider_org_*,",
 #     "transaction_receiver_org_*,transaction_disbursement_channel_code,",
 #     "transaction_sector_*,transaction_recipient_*,transaction_flow_type_code,",
@@ -85,7 +85,7 @@ single_vocabulary = function(row){
 # }
 # 
 # transactions = rbindlist(transaction_list)
-
+# 
 # save(activities,transactions,file="ke_ug.RData")
 load("ke_ug.RData")
 
@@ -110,7 +110,7 @@ transactions.split.long=subset(transactions.split.long, !is.na(generic.recipient
 transactions.split.long$generic.recipient.country.code = as.character(transactions.split.long$generic.recipient.country.code)
 transactions.split.long$generic.recipient.country.code[which(is.na(transactions.split.long$generic.recipient.country.code))] = "Missing"
 transactions.split.long$sum_percent[which(transactions.split.long$sum_percent==0)] = 100
-transactions.split.long$country.split.transaction.value=(transactions.split.long$sum_percent/100)*transactions.split.long$transaction.value
+transactions.split.long$country.split.transaction.value=(transactions.split.long$generic.recipient.country.percentage/transactions.split.long$sum_percent)*transactions.split.long$transaction.value
 transactions.split.long$country.split.transaction.value[which(is.na(transactions.split.long$country.split.transaction.value))] = transactions.split.long$transaction.value[which(is.na(transactions.split.long$country.split.transaction.value))]
 transactions.split.long[,c("max_count", "count", "transaction.id", "id", "time", "sum_percent")] = NULL
 
@@ -140,7 +140,7 @@ transactions.split.long=subset(transactions.split.long, !is.na(generic.sector.co
 transactions.split.long$generic.sector.code = as.character(transactions.split.long$generic.sector.code)
 transactions.split.long$generic.sector.code[which(is.na(transactions.split.long$generic.sector.code))] = "99810"
 transactions.split.long$sum_percent[which(transactions.split.long$sum_percent==0)] = 100
-transactions.split.long$sector.country.split.transaction.value=(transactions.split.long$sum_percent/100)*transactions.split.long$country.split.transaction.value
+transactions.split.long$sector.country.split.transaction.value=(transactions.split.long$generic.sector.percentage/transactions.split.long$sum_percent)*transactions.split.long$country.split.transaction.value
 transactions.split.long$sector.country.split.transaction.value[which(is.na(transactions.split.long$sector.country.split.transaction.value))] = transactions.split.long$country.split.transaction.value[which(is.na(transactions.split.long$sector.country.split.transaction.value))]
 transactions.split.long[,c("max_count", "count", "transaction.id", "id", "time", "sum_percent")] = NULL
 
