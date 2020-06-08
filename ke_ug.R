@@ -92,6 +92,9 @@ load("ke_ug.RData")
 # Join activity_level_data
 transactions = merge(transactions,activities,by="iati_identifier")
 
+# Create unique ID
+transactions$unique_transaction_id = c(1:nrow(transactions))
+
 # Country split
 transactions$generic_recipient_country_code = transactions[,"transaction_recipient_country_code",with=F]
 transactions$generic_recipient_country_percentage = "100"
