@@ -98,8 +98,8 @@ transactions$unique_transaction_id = c(1:nrow(transactions))
 # Country split
 transactions$generic_recipient_country_code = transactions[,"transaction_recipient_country_code",with=F]
 transactions$generic_recipient_country_percentage = "100"
-transactions$generic_recipient_country_percentage[which(is.na(transactions$generic_recipient_country_code))] = transactions$recipient_country_percentage[which(is.na(transactions$generic_recipient_country_code))]
-transactions$generic_recipient_country_code[which(is.na(transactions$generic_recipient_country_code))] = transactions$recipient_country_code[which(is.na(transactions$generic_recipient_country_code))]
+transactions$generic_recipient_country_percentage[which(is.na(transactions$generic_recipient_country_code) | transactions$generic_recipient_country_code=="")] = transactions$recipient_country_percentage[which(is.na(transactions$generic_recipient_country_code) | transactions$generic_recipient_country_code=="")]
+transactions$generic_recipient_country_code[which(is.na(transactions$generic_recipient_country_code) | transactions$generic_recipient_country_code=="")] = transactions$recipient_country_code[which(is.na(transactions$generic_recipient_country_code) | transactions$generic_recipient_country_code=="")]
 
 transactions$transaction.id = c(1:nrow(transactions))
 names(transactions) = gsub("_",".",names(transactions))
@@ -124,9 +124,9 @@ transactions = transactions.split.long
 transactions$generic_sector_code = transactions[,"transaction.sector.code",with=F]
 transactions$generic_sector_percentage = "100"
 transactions$generic_sector_vocabulary = transactions[,"transaction.sector.vocabulary",with=F]
-transactions$generic_sector_percentage[which(is.na(transactions$generic_sector_code))] = transactions$sector.percentage[which(is.na(transactions$generic_sector_code))]
-transactions$generic_sector_vocabulary[which(is.na(transactions$generic_sector_code))] = transactions$sector.vocabulary[which(is.na(transactions$generic_sector_code))]
-transactions$generic_sector_code[which(is.na(transactions$generic_sector_code))] = transactions$sector.code[which(is.na(transactions$generic_sector_code))]
+transactions$generic_sector_percentage[which(is.na(transactions$generic_sector_code) | transactions$generic_sector_code=="")] = transactions$sector.percentage[which(is.na(transactions$generic_sector_code) | transactions$generic_sector_code=="")]
+transactions$generic_sector_vocabulary[which(is.na(transactions$generic_sector_code) | transactions$generic_sector_code=="")] = transactions$sector.vocabulary[which(is.na(transactions$generic_sector_code) | transactions$generic_sector_code=="")]
+transactions$generic_sector_code[which(is.na(transactions$generic_sector_code) | transactions$generic_sector_code=="")] = transactions$sector.code[which(is.na(transactions$generic_sector_code) | transactions$generic_sector_code=="")]
 
 # for(i in 1:nrow(transactions)){
 #   transactions[i,] = single_vocabulary(transactions[i,])
