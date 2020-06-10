@@ -20,7 +20,7 @@ url = paste0(
   'transaction_receiver_org_ref:(47122) OR participating_org_ref:("47122")',
   "&fl=",
   "iati_identifier,reporting_org_*,title*,description*,transaction_receiver*,participating_org*",
-  '&wt=xslt&tr=activity-csv.xsl&rows=5000000'
+  '&wt=csv&rows=5000000'
 )
 activities = read.csv(URLencode(url),as.is=T,na.strings="")
 activities = subset(activities,reporting_org_ref!="47122")
