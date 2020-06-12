@@ -175,6 +175,7 @@ covid_participants_unique = merge(covid_participants_unique,org_roles)
 fwrite(covid_participants_unique,"whos_involved.csv")
 # What are the implementing agencies and how many activities are being implemented by each? 
 implementing = subset(covid_participants_unique,participating.org.role.name=="Implementing")
+implementing$participating.org.name = as.character(implementing$participating.org.name)
 implementing$participating.org.name[which(is.na(implementing$participating.org.name))] = implementing$participating.org.ref[which(is.na(implementing$participating.org.name))]
 implementing_tab = implementing[,.(activity_count=length(unique(.SD$iati.identifier))),by=.(participating.org.name)]
 implementing_tab = implementing_tab[order(-implementing_tab$activity_count),]
