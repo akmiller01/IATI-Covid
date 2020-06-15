@@ -1,4 +1,4 @@
-list.of.packages <- c("data.table", "anytime", "dplyr", "reshape2","splitstackshape","stringr")
+list.of.packages <- c("data.table", "googledrive")
 new.packages <- list.of.packages[!(list.of.packages %in% installed.packages()[,"Package"])]
 if(length(new.packages)) install.packages(new.packages)
 lapply(list.of.packages, require, character.only=T)
@@ -25,3 +25,15 @@ url = paste0(
 activities = read.csv(URLencode(url),as.is=T,na.strings="")
 activities = subset(activities,reporting_org_ref!="47122")
 fwrite(activities, "gavi_test.csv")
+
+# gavi_sheet <- drive_upload(
+#   media="gavi_test.csv",
+#   path=as_id("1urT1sW4k7ngnQeVZfiZ5XDEk-PRtj_Fq"),
+#   "GAVI Filter",
+#   type = "spreadsheet"
+# )
+
+gavi_sheet <- drive_update(
+  file=as_id("1pzq3zY7So2mjMl8a-F2X_i1ZLfPftUOqXa_mlUNbBYs"),
+  media="gavi_test.csv"
+)
