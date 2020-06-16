@@ -78,7 +78,7 @@ def convert_usd(value, year, currency, ratedf):
 # A class that will hold the flattening function and dictionary definitions
 class IatiFlat(object):
     def __init__(self):
-        self.header = ["year", "transaction_date", "budget_period_start", "budget_period_end", "transaction_type", "usd_disbursement", "budget_or_transaction", "budget_type", "iati_identifier", "reporting_org_name", "reporting_org_ref", "reporting_org_type", "secondary_reporter", "humanitarian", "transaction_sector_code", "transaction_sector_percentage", "transaction_sector_vocabulary", "recipient_country_codes", "recipient_country_percentages", "finance_type_code", "humanitarian_scope_narrative", "humanitarian_scope_code", "activity_title", "activity_description", "transaction_description_narrative", "tag_code", "tag_narrative"]
+        self.header = ["year", "transaction_date", "budget_period_start", "budget_period_end", "transaction_type", "usd_disbursement", "budget_or_transaction", "budget_type", "iati_identifier", "reporting_org_name", "reporting_org_ref", "reporting_org_type", "secondary_reporter", "humanitarian", "transaction_sector_code", "transaction_sector_percentage", "transaction_sector_vocabulary", "recipient_country_codes", "recipient_country_percentages", "finance_type_code", "humanitarian_scope_narrative", "humanitarian_scope_code", "activity_title", "activity_description", "transaction_description_narrative", "tag_code", "tag_narrative", "participating_org_name", "participating_org_ref", "participating_org_type", "participating_org_role"]
         self.dictionaries = {}
         # Defaults, can be overwritten with next function
         self.dictionaries["ratedf"] = ratedf
@@ -165,6 +165,28 @@ class IatiFlat(object):
             reporting_org_name = default_first(activity.xpath("reporting-org/narrative/text()"))
             reporting_org_ref = default_first(activity.xpath("reporting-org/@ref"))
 
+            participating_org_ref = []
+            participating_org_type = []
+            participating_org_role = []
+            participating_org_name = []
+            participating_orgs = activity.findall("participating-org")
+            for participating_org in participating_orgs:
+                attribs = participating_org.attrib
+                attrib_keys = list(attribs.keys())
+                ref = attribs['ref'] if 'ref' in attrib_keys else ""
+                participating_org_ref.append(ref)
+                p_type = attribs['type'] if 'type' in attrib_keys else ""
+                participating_org_type.append(p_type)
+                role = attribs['role'] if 'role' in attrib_keys else ""
+                participating_org_role.append(role)
+                p_name = default_first(participating_org.xpath("narrative/text()"))
+                p_name = p_name if p_name else ""
+                participating_org_name.append(p_name)
+            participating_org_ref = ",".join(participating_org_ref)
+            participating_org_type = ",".join(participating_org_type)
+            participating_org_role = ",".join(participating_org_role)
+            participating_org_name = ",".join(participating_org_name)
+
             defaults = {}
             default_tags = ["default-currency", "default-finance-type"]
             for tag in default_tags:
@@ -179,6 +201,12 @@ class IatiFlat(object):
                 defaults["default-currency"] = "GBP"
 
             has_transactions = "transaction" in child_tags
+            has_budget = "budget" in child_tags
+            if not has_transactions and not has_budget:
+                activity_date = default_first(activity.xpath("activity-date/@iso-date"))
+                year = activity_date[:4] if activity_date is not None else None
+                row = [year, activity_date, None, None, None, None, "Activity", None, iati_identifier, reporting_org_name, reporting_org_ref, reporting_org_type, secondary_reporter, humanitarian, activity_sector_codes, activity_sector_percentages, activity_sector_vocabularies, recipient_country_codes, recipient_country_percentages, None, humanitarian_scope_narrative, humanitarian_scope_code, activity_title, activity_description, None, tag_code, tag_narrative, participating_org_name, participating_org_ref, participating_org_type, participating_org_role]
+                output.append(row)
             if has_transactions:
                 transactions = activity.findall("transaction")
 
@@ -235,60 +263,62 @@ class IatiFlat(object):
                             converted_value = convert_usd(value, year, currency, self.dictionaries["ratedf"])
                         else:
                             pdb.set_trace()
-                        # "year", "transaction_date", "budget_period_start", "budget_period_end", "transaction_type", "usd_disbursement", "budget_or_transaction", "budget_type", "iati_identifier", "reporting_org_name", "reporting_org_ref"
-                        row = [year, transaction_date, budget_period_start, budget_period_end, transaction_type_code, converted_value, b_or_t, budget_type, iati_identifier, reporting_org_name, reporting_org_ref, reporting_org_type, secondary_reporter, humanitarian, transaction_sector_code, transaction_sector_percentage, transaction_sector_vocabulary, transaction_country_code, transaction_country_percentage, finance_type_code, humanitarian_scope_narrative, humanitarian_scope_code, activity_title, activity_description, transaction_description_narrative, tag_code, tag_narrative]
-                        output.append(row)
+                    else:
+                        converted_value = "0"
+                    row = [year, transaction_date, budget_period_start, budget_period_end, transaction_type_code, converted_value, b_or_t, budget_type, iati_identifier, reporting_org_name, reporting_org_ref, reporting_org_type, secondary_reporter, humanitarian, transaction_sector_code, transaction_sector_percentage, transaction_sector_vocabulary, transaction_country_code, transaction_country_percentage, finance_type_code, humanitarian_scope_narrative, humanitarian_scope_code, activity_title, activity_description, transaction_description_narrative, tag_code, tag_narrative, participating_org_name, participating_org_ref, participating_org_type, participating_org_role]
+                    output.append(row)
 
-                # Loop through budgets, and capture as close equivalents as we can to transactions
+            # Loop through budgets, and capture as close equivalents as we can to transactions
+            if has_budget:
                 budget_output = []
-                has_budget = "budget" in child_tags
-                if has_budget:
-                    budgets = activity.findall("budget")
+                budgets = activity.findall("budget")
 
-                    for budget in budgets:
-                        transaction_type_code = None
-                        if "type" in budget.attrib.keys():
-                            budget_type = budget.attrib["type"]
-                        else:
-                            budget_type = None
+                for budget in budgets:
+                    transaction_type_code = None
+                    if "type" in budget.attrib.keys():
+                        budget_type = budget.attrib["type"]
+                    else:
+                        budget_type = None
 
-                        transaction_date = default_first(budget.xpath("period-start/@iso-date"))
-                        transaction_date_end = default_first(budget.xpath("period-end/@iso-date"))
-                        time_range = {}
-                        try:
-                            time_range["start"] = dateutil.parser.parse(transaction_date)
-                            time_range["end"] = dateutil.parser.parse(transaction_date_end)
-                        except (TypeError, ValueError) as error:
-                            time_range["start"] = None
-                            time_range["end"] = None
-                        if time_range["start"] is not None:
-                            time_range["length"] = time_range["end"]-time_range["start"]
-                            if time_range["length"] < datetime.timedelta(370):
-                                year = time_range["start"].year
+                    transaction_date = default_first(budget.xpath("period-start/@iso-date"))
+                    transaction_date_end = default_first(budget.xpath("period-end/@iso-date"))
+                    time_range = {}
+                    try:
+                        time_range["start"] = dateutil.parser.parse(transaction_date)
+                        time_range["end"] = dateutil.parser.parse(transaction_date_end)
+                    except (TypeError, ValueError) as error:
+                        time_range["start"] = None
+                        time_range["end"] = None
+                    if time_range["start"] is not None:
+                        time_range["length"] = time_range["end"]-time_range["start"]
+                        if time_range["length"] < datetime.timedelta(370):
+                            year = time_range["start"].year
 
-                                value = default_first(budget.xpath("value/text()"))
-                                try:
-                                    value = float(value.replace(" ", "")) if value is not None else None
-                                except ValueError:
-                                    value = None
-                                currency = default_first(budget.xpath("value/@currency"))
-                                currency = replace_default_if_none(currency, defaults["default-currency"])
-                                if currency is not None:
-                                    currency = currency.replace(" ", "")
-                                if publisher in troublesome_publishers:
-                                    currency = defaults["default-currency"]
+                            value = default_first(budget.xpath("value/text()"))
+                            try:
+                                value = float(value.replace(" ", "")) if value is not None else None
+                            except ValueError:
+                                value = None
+                            currency = default_first(budget.xpath("value/@currency"))
+                            currency = replace_default_if_none(currency, defaults["default-currency"])
+                            if currency is not None:
+                                currency = currency.replace(" ", "")
+                            if publisher in troublesome_publishers:
+                                currency = defaults["default-currency"]
 
-                                b_or_t = "Budget"
+                            b_or_t = "Budget"
 
-                                if value and currency:
-                                    if currency in self.dictionaries["ratedf"]:
-                                        converted_value = convert_usd(value, year, currency, self.dictionaries["ratedf"])
-                                    else:
-                                        pdb.set_trace()
-                                    # "year", "transaction_date", "budget_period_start", "budget_period_end", "transaction_type", "usd_disbursement", "budget_or_transaction", "budget_type", "iati_identifier", "reporting_org_name", "reporting_org_ref"
-                                    row = [year, None, transaction_date, transaction_date_end, transaction_type_code, converted_value, b_or_t, budget_type, iati_identifier, reporting_org_name, reporting_org_ref, reporting_org_type, secondary_reporter, humanitarian, None, None, None, recipient_country_codes, recipient_country_percentages, defaults["default-finance-type"], humanitarian_scope_narrative, humanitarian_scope_code, activity_title, activity_description, None, tag_code, tag_narrative]
-                                    meta = {"row": row, "time_range": time_range, "budget_type": budget_type}
-                                    budget_output.append(meta)
+                            if value and currency:
+                                if currency in self.dictionaries["ratedf"]:
+                                    converted_value = convert_usd(value, year, currency, self.dictionaries["ratedf"])
+                                else:
+                                    pdb.set_trace()
+                            else:
+                                converted_value = "0"
+
+                            row = [year, None, transaction_date, transaction_date_end, transaction_type_code, converted_value, b_or_t, budget_type, iati_identifier, reporting_org_name, reporting_org_ref, reporting_org_type, secondary_reporter, humanitarian, None, None, None, recipient_country_codes, recipient_country_percentages, defaults["default-finance-type"], humanitarian_scope_narrative, humanitarian_scope_code, activity_title, activity_description, None, tag_code, tag_narrative, participating_org_name, participating_org_ref, participating_org_type, participating_org_role]
+                            meta = {"row": row, "time_range": time_range, "budget_type": budget_type}
+                            budget_output.append(meta)
                 if len(budget_output) > 1:
                     overlaps = []
                     spoiled = False
