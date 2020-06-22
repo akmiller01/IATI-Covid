@@ -80,7 +80,7 @@ covid_related_act_tab = covid_related_act_trans[,.(
   sum_commitments=sum(.SD$usd_disbursement[which(.SD$transaction_type %in% comm)],na.rm=T),
   sum_disbursements=sum(.SD$usd_disbursement[which(.SD$transaction_type %in% disb)],na.rm=T)
   ),by=.(iati_identifier)]
-covid_related_activities = merge(covid_related_activities,covid_related_act_tab,by="iati_identifier")
+covid_related_activities = merge(covid_related_activities,covid_related_act_tab,by="iati_identifier",all.x=T)
 
 fwrite(covid_related_activities,"covid_related_activities.csv")
 
