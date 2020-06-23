@@ -379,6 +379,7 @@ class IatiFlat(object):
                             x_country_percentage = x_country_percentage_list[j]
                             try:
                                 x_country_percentage = float(x_country_percentage)
+                                percentage_convertable = True
                             except ValueError:
                                 percentage_convertable = False
                             if transaction_convertable:
@@ -399,6 +400,7 @@ class IatiFlat(object):
                             x_region_percentage = x_region_percentage_list[j]
                             try:
                                 x_region_percentage = float(x_region_percentage)
+                                percentage_convertable = True
                             except ValueError:
                                 percentage_convertable = False
                             if transaction_convertable:
