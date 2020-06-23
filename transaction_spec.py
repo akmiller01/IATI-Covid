@@ -247,7 +247,7 @@ class IatiFlat(object):
                     transaction_recipient_country_code = default_first(transaction.xpath("recipient-country/@code"))
                     if transaction_recipient_country_code:
                         x_country_code = transaction_recipient_country_code
-                        x_country_percentage = 100
+                        x_country_percentage = "100"
                     else:
                         x_country_code = recipient_country_code
                         x_country_percentage = recipient_country_percentage
@@ -257,7 +257,7 @@ class IatiFlat(object):
                     if transaction_recipient_region_code:
                         x_region_code = transaction_recipient_region_code
                         x_region_vocabulary = transaction_recipient_region_vocabulary
-                        x_region_percentage = 100
+                        x_region_percentage = "100"
                     else:
                         x_region_code = recipient_region_code
                         x_region_vocabulary = recipient_region_vocabulary
@@ -271,7 +271,7 @@ class IatiFlat(object):
                     transaction_sector_vocabulary = default_first(transaction.xpath("sector/@vocabulary"))
                     if transaction_sector_code:
                         x_sector_code = transaction_sector_code
-                        x_sector_percentage = 100
+                        x_sector_percentage = "100"
                         x_sector_vocabulary = ""
                     else:
                         x_sector_code = sector_code
