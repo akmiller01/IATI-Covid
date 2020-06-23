@@ -124,10 +124,9 @@ class IatiFlat(object):
                 if percentage is not None:
                     percentage = percentage.replace("%", "")
                     try:
-                        percentage = float(percentage)
-                        recipient_country_percentage_sum += percentage
+                        recipient_country_percentage_sum += float(percentage)
                     except ValueError:
-                        percentage = ""
+                        pass
                 code = attribs['code'] if 'code' in attrib_keys else None
                 if code is not None:
                     recipient_country_code_list.append(code)
@@ -368,6 +367,7 @@ class IatiFlat(object):
                     transaction_receiver_org_type = default_first(transaction.xpath("receiver-org/@type"))
                     transaction_ref = default_first(transaction.xpath("@ref"))
 
+                    x_transaction_value = transaction_value
                     x_transaction_value_usd = ""
                     x_country_code_list = x_country_code.split(",")
                     x_country_percentage_list = x_country_percentage.split(",")
@@ -376,9 +376,16 @@ class IatiFlat(object):
                     if len(x_country_code_list) > 0:
                         for j in range(0, len(x_country_code_list)):
                             x_country_code = x_country_code_list[j]
-                            x_country_percentage = float(x_country_percentage_list[j])
+                            x_country_percentage = x_country_percentage_list[j]
+                            try:
+                                x_country_percentage = float(x_country_percentage)
+                            except ValueError:
+                                percentage_convertable = False
                             if transaction_convertable:
-                                x_transaction_value = transaction_value * x_country_percentage
+                                if percentage_convertable:
+                                    x_transaction_value = transaction_value * (x_country_percentage/100)
+                                else:
+                                    x_transaction_value = transaction_value
                                 if transaction_value and x_currency:
                                     if x_currency in self.dictionaries["ratedf"]:
                                         x_transaction_value_usd = convert_usd(x_transaction_value, year, x_currency, self.dictionaries["ratedf"])
@@ -389,9 +396,16 @@ class IatiFlat(object):
                     elif len(x_region_code_list) > 0:
                         for j in range(0, len(x_region_code_list)):
                             x_region_code = x_region_code_list[j]
-                            x_region_percentage = float(x_region_percentage_list[j])
+                            x_region_percentage = x_region_percentage_list[j]
+                            try:
+                                x_region_percentage = float(x_region_percentage)
+                            except ValueError:
+                                percentage_convertable = False
                             if transaction_convertable:
-                                x_transaction_value = transaction_value * x_region_percentage
+                                if percentage_convertable:
+                                    x_transaction_value = transaction_value * (x_region_percentage/100)
+                                else:
+                                    x_transaction_value = transaction_value
                                 if transaction_value and x_currency:
                                     if x_currency in self.dictionaries["ratedf"]:
                                         x_transaction_value_usd = convert_usd(x_transaction_value, year, x_currency, self.dictionaries["ratedf"])
@@ -401,7 +415,6 @@ class IatiFlat(object):
                             output.append(row)
                     else:
                         if transaction_convertable:
-                            x_transaction_value = transaction_value
                             if transaction_value and x_currency:
                                 if x_currency in self.dictionaries["ratedf"]:
                                     x_transaction_value_usd = convert_usd(x_transaction_value, year, x_currency, self.dictionaries["ratedf"])
