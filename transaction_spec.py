@@ -320,6 +320,8 @@ class IatiFlat(object):
                     except ValueError:
                         transaction_value = transaction_value
                         transaction_convertable = False
+                    if not transaction_value:
+                        transaction_convertable = False
 
                     default_flow_type_code = defaults["default-flow-type-code"]
                     transaction_flow_type_code = default_first(transaction.xpath("flow-type/@code"))
