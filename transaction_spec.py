@@ -284,7 +284,10 @@ class IatiFlat(object):
                     x_dac3_sector_code_list = list()
                     for j in range(0, len(x_sector_code.split(","))):
                         tmp_sector_code = x_sector_code.split(",")[j]
-                        tmp_sector_vocab = x_sector_vocabulary.split(",")[j]
+                        try:
+                            tmp_sector_vocab = x_sector_vocabulary.split(",")[j]
+                        except IndexError:
+                            continue
                         if tmp_sector_vocab == "1":
                             x_dac3_sector_code_tmp = tmp_sector_code[:3]
                             x_dac3_sector_code_list.append(x_dac3_sector_code_tmp)
