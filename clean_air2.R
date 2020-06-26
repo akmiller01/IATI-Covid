@@ -32,6 +32,8 @@ for(csv in csvs){
 }
 
 agg = rbindlist(agg_list)
+# save(agg,file="clean_air_agg.R")
+load("clean_air_agg.R")
 
 setdiff(clean_air_ids,unique(agg$iati_identifier))
 disb = c("E", "D", "3", "4")
@@ -59,4 +61,6 @@ agg.tab[,c("x_finance_type_code","x_flow_type_code")] = NULL
 
 agg_tab_m = melt(agg.tab,id.vars=c("iati_identifier","x_transaction_year","flow_type","finance_type"))
 agg_tab_wide = dcast(agg_tab_m,iati_identifier+flow_type+finance_type~variable+x_transaction_year)
+agg_tab_wide = agg_tab_wide[order(agg_tab_wide$iati_identifier),]
+length(setdiff(clean_air_ids,unique(agg_tab_wide$iati_identifier)))
 fwrite(agg_tab_wide,"clean_air_sum2.csv")
