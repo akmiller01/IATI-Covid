@@ -279,7 +279,7 @@ class IatiFlat(object):
                         x_sector_vocabulary = sector_vocabulary
                     if x_sector_vocabulary == "" and len(x_sector_code.split("|")[0]) == 5:
                         x_sector_vocabulary = "1"
-                    else:
+                    elif x_sector_vocabulary == "":
                         x_sector_vocabulary = "97"
 
                     transaction_type_code = default_first(transaction.xpath("transaction-type/@code"))

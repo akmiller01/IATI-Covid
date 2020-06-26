@@ -17,8 +17,7 @@ if __name__ == '__main__':
 
     # Predefined header names
     header = iatiflat.header
-    full_header = header + ["publisher"]
-    header_frame = pd.DataFrame([full_header])
+    header_frame = pd.DataFrame([header])
     header_frame.to_csv("/home/alex/git/IATI-Covid/sep/000header.csv", index=False, header=False, encoding="utf-8")
 
     # Loop through all the folders downloaded via IATI registry refresh, and pass XML roots to our flatten_activities function.
@@ -40,4 +39,4 @@ if __name__ == '__main__':
     # Once individual (headless) CSVs are written for each donor. It's an easy step to concatenate them into one large document.
     # You may want to consider doing this in code rather than saving each donor's CSVs to disk, but I found this useful for
     # saving progress physically in case the conversion process gets interrupted
-    os.system("cat /home/alex/git/IATI-Covid/sep/*.csv > /home/alex/git/IATI-Covid/output/iati_transaction_spec.csv")
+    # os.system("cat /home/alex/git/IATI-Covid/sep/*.csv > /home/alex/git/IATI-Covid/output/iati_transaction_spec.csv")
