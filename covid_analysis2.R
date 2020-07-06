@@ -59,7 +59,8 @@ for(csv in csvs){
 agg_global = rbindlist(agg_list_global)
 agg_local = rbindlist(agg_list_local)
 agg_oda = rbindlist(agg_list_oda)
-save(agg_global,agg_local,agg_oda,file="covid_analysis2.RData")
+save(agg_global,agg_local,file="covid_analysis2.RData")
+save(agg_oda,file="agg_oda.RData")
 # load("covid_analysis2.RData")
 
 fwrite(agg_global,"global_covid_filter.csv")
