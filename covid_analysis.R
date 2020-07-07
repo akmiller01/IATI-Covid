@@ -69,8 +69,20 @@ keep = c("iati_identifier","publisher","year","transaction_date","activity_title
 keep.act = c("iati_identifier","publisher","activity_title","activity_description",
              "humanitarian_scope_code", "humanitarian_scope_narrative","tag_code","tag_narrative"
 )
+keep.act.trans = c("iati_identifier","transaction_type","usd_disbursement"
+)
 fwrite(unique(near_covid[which(near_covid$iati_identifier %in% new_ids),keep,with=F]),"near_covid.csv")
-fwrite(unique(covid_related[,keep.act,with=F]),"covid_related_activities.csv")
+
+covid_related_activities = unique(covid_related[,keep.act,with=F])
+covid_related_act_trans = covid_related[,keep.act.trans,with=F]
+covid_related_act_trans$usd_disbursement = as.numeric(covid_related_act_trans$usd_disbursement)
+covid_related_act_tab = covid_related_act_trans[,.(
+  sum_commitments=sum(.SD$usd_disbursement[which(.SD$transaction_type %in% comm)],na.rm=T),
+  sum_disbursements=sum(.SD$usd_disbursement[which(.SD$transaction_type %in% disb)],na.rm=T)
+  ),by=.(iati_identifier)]
+covid_related_activities = merge(covid_related_activities,covid_related_act_tab,by="iati_identifier",all.x=T)
+
+fwrite(covid_related_activities,"covid_related_activities.csv")
 
 # BASIC QUESTIONS
 # Which IATI publishers are currently publishing COVID-19 related activities/transactions? Which elements are they using?

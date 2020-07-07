@@ -46,6 +46,6 @@ fwrite(transactions, "gavi_transactions_2020.csv")
 # )
 
 t_sheet <- drive_update(
-  file=as_id("1LeVyfbTsqTeA_9mI08pNhE0HRzn2aj1NLwPn228W8y8s"),
-  media="all_transactions_2020.csv"
+  file=as_id("1LeVyfbTsqTeA_9mI08pNhE0HRzn2aj1NLwPn228W8y8"),
+  media="gavi_transactions_2020.csv"
 )
