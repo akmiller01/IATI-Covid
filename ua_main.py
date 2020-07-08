@@ -19,7 +19,7 @@ if __name__ == '__main__':
     header = iatiflat.header
     full_header = header
     header_frame = pd.DataFrame([full_header])
-    header_frame.to_csv("/home/alex/git/IATI-Covid/ua_sep/0a0aheader.csv", index=False, header=False, encoding="utf-8")
+    header_frame.to_csv("/home/alex/git/IATI-Covid/ua_sep/0000000000000000000header.csv", index=False, header=False, encoding="utf-8")
 
     # Loop through all the folders downloaded via IATI registry refresh, and pass XML roots to our flatten_activities function.
     for subdir, dirs, files in os.walk(rootdir):
