@@ -13,7 +13,7 @@ if __name__ == '__main__':
     os.mkdir("/home/alex/git/IATI-Covid/sep/")
 
     # Where to look for saved IATI XML via registry-refresher
-    rootdir = '/home/alex/git/IATI-Registry-Refresher/data'
+    rootdir = '/home/alex/git/IATI-Better-Refresher/data'
 
     # Predefined header names
     header = iatiflat.header
@@ -24,7 +24,6 @@ if __name__ == '__main__':
     for subdir, dirs, files in os.walk(rootdir):
         for filename in files:
             filepath = os.path.join(subdir, filename)
-            publisher = os.path.basename(subdir)
             print(filename)
             try:
                 root = etree.parse(filepath).getroot()
