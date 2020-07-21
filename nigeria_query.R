@@ -54,7 +54,8 @@ agg = subset(
   )
 )
 agg[,c("budget_period_start", "budget_period_end", "budget_type", "budget_or_transaction")] = NULL
-
+agg$transaction_date = anydate(agg$transaction_date)
+agg = subset(agg, transaction_date <= as.Date("2020-06-30"))
 # Split recipient country
 agg$transaction.id = c(1:nrow(agg))
 names(agg) = gsub("_",".",names(agg))
@@ -118,4 +119,4 @@ agg = merge(agg,finance_types,by="finance.type.code",all.x=T)
 remove = c("finance.type.code", "reporting.org.type","secondary.reporter","humanitarian")
 agg[,remove]=NULL
 
-fwrite(agg,"nigeria_query_2016.csv")
+fwrite(agg,"nigeria_query2.csv")

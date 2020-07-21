@@ -87,7 +87,7 @@ class IatiFlat(object):
         self.dictionaries[name] = dictionary
 
     # Main flattening function here. Input is the XML root of the XML document, and output is an array of arrays with flattened data.
-    def flatten_activities(self, root, publisher):
+    def flatten_activities(self, root):
         for dictionary_name in ["ratedf"]:
             assert dictionary_name in self.dictionaries, "Missing dictionary: {}".format(dictionary_name)
         output = []
@@ -196,9 +196,6 @@ class IatiFlat(object):
                     defaults[tag] = default_first(activity.xpath("{}/@code".format(tag)))
                 else:
                     defaults[tag] = None
-            troublesome_publishers = ["fco", "wwf-uk"]
-            if publisher == "fco":
-                defaults["default-currency"] = "GBP"
 
             has_transactions = "transaction" in child_tags
             has_budget = "budget" in child_tags
@@ -245,8 +242,6 @@ class IatiFlat(object):
                         currency = None
                     if currency is not None:
                         currency = currency.replace(" ", "")
-                    if publisher in troublesome_publishers:
-                        currency = defaults["default-currency"]
 
                     value = default_first(transaction.xpath("value/text()"))
                     try:
@@ -303,8 +298,6 @@ class IatiFlat(object):
                             currency = replace_default_if_none(currency, defaults["default-currency"])
                             if currency is not None:
                                 currency = currency.replace(" ", "")
-                            if publisher in troublesome_publishers:
-                                currency = defaults["default-currency"]
 
                             b_or_t = "Budget"
 
