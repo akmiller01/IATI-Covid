@@ -244,4 +244,11 @@ dagg = merge(dagg,org_id,by="transaction_provider_org_ref",all.x=T)
 dagg$x_transaction_provider_org[which(is.na(dagg$x_transaction_provider_org))] = dagg$x_transaction_provider_org_recode[which(is.na(dagg$x_transaction_provider_org))]
 dagg$x_transaction_provider_org_recode = NULL
 
+dagg$x_transaction_receiver_org = dagg$transaction_receiver_org_narrative
+dagg$x_transaction_receiver_org = as.character(dagg$x_transaction_receiver_org)
+names(org_id) = c("transaction_receiver_org_ref","x_transaction_receiver_org_recode")
+dagg = merge(dagg,org_id,by="transaction_receiver_org_ref",all.x=T)
+dagg$x_transaction_receiver_org[which(is.na(dagg$x_transaction_receiver_org))] = dagg$x_transaction_receiver_org_recode[which(is.na(dagg$x_transaction_receiver_org))]
+dagg$x_transaction_receiver_org_recode = NULL
+
 write_excel_csv(dagg,"Past Spending_Chad_split_t_split_sector_edited_recode_qb.csv",na="")
