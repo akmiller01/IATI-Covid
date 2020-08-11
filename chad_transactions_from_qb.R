@@ -72,7 +72,7 @@ agg.split = cSplit(agg,t_names,",")
 new_names = setdiff(names(agg.split),original_names)
 agg.split.long = reshape(agg.split, varying=new_names, direction="long", sep="_")
 agg.split.long[ , `:=`( max_count = .N , count = 1:.N ) , by = .(transaction.id) ]
-agg.split.long=subset(agg.split.long, !is.na(transaction.type.code) | max_count==1 | count==1)
+agg.split.long=subset(agg.split.long, (!is.na(transaction.type.code) & !is.na(transaction.value)) | max_count==1 | count==1)
 agg.split.long[,c("max_count", "count", "transaction.id", "id", "time")] = NULL
 
 agg = agg.split.long
