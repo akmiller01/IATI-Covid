@@ -82,6 +82,28 @@ write_excel_csv(agg,"Past Spending_Chad_split_t_qb.csv", na="")
 agg$transaction_value_date = anydate(agg$transaction_value_date)
 agg = subset(agg,transaction_value_date >= as.Date("2016-01-01"))
 
+# Split recipient country
+agg$transaction_value = as.numeric(agg$transaction_value)
+pre = sum(agg$transaction_value,na.rm=T)
+agg$transaction.id = c(1:nrow(agg))
+names(agg) = gsub("_",".",names(agg))
+original_names = names(agg)
+agg.split = cSplit(agg,c("recipient.country.code", "recipient.country.percentage"),",")
+new_names = setdiff(names(agg.split),original_names)
+agg.split.long = reshape(agg.split, varying=new_names, direction="long", sep="_")
+agg.split.long$transaction.value = as.numeric(agg.split.long$transaction.value)
+agg.split.long[ , `:=`( max_count = .N , count = 1:.N, sum_percent=sum(recipient.country.percentage, na.rm=T) ) , by = transaction.id ]
+agg.split.long=subset(agg.split.long, !is.na(recipient.country.code) | max_count==1 | count==1)
+agg.split.long$transaction.value.split=(agg.split.long$recipient.country.percentage/agg.split.long$sum_percent)*agg.split.long$transaction.value
+agg.split.long$transaction.value.split[which(is.na(agg.split.long$transaction.value.split))] = agg.split.long$transaction.value[which(is.na(agg.split.long$transaction.value.split))]
+agg.split.long$chad.transaction.value = agg.split.long$transaction.value.split
+agg.split.long[,c("transaction.value.split", "max_count", "count", "transaction.id", "id", "time", "sum_percent")] = NULL
+post = sum(agg.split.long$chad.transaction.value,na.rm=T)
+pre == post
+agg = subset(agg.split.long,recipient.country.code %in% c("TD","TCD"))
+names(agg) = gsub(".","_",names(agg),fixed=T)
+
+
 agg$x_sector_code = as.character(agg$transaction_sector_code)
 agg$x_sector_vocabulary = agg$transaction_sector_vocabulary
 agg$x_sector_percentage = "100"
@@ -216,28 +238,4 @@ dagg = merge(dagg,org_id,by="transaction_provider_org_ref",all.x=T)
 dagg$x_transaction_provider_org[which(is.na(dagg$x_transaction_provider_org))] = dagg$x_transaction_provider_org_recode[which(is.na(dagg$x_transaction_provider_org))]
 dagg$x_transaction_provider_org_recode = NULL
 
-# Split recipient country
-dagg$transaction_value = as.numeric(dagg$transaction_value)
-# Fix for massive recipient activity
-dagg$transaction_value[which(dagg$iati_identifier=="NO-BRC-980997278-970000")] = dagg$transaction_value[which(dagg$iati_identifier=="NO-BRC-980997278-970000")] * (0.699301/100)
-dagg$recipient_country_code[which(dagg$iati_identifier=="NO-BRC-980997278-970000")] = "TD"
-dagg$recipient_country_percentage[which(dagg$iati_identifier=="NO-BRC-980997278-970000")] = 100
-pre = sum(dagg$transaction_value,na.rm=T)
-dagg$transaction.id = c(1:nrow(dagg))
-names(dagg) = gsub("_",".",names(dagg))
-original_names = names(dagg)
-agg.split = cSplit(dagg,c("recipient.country.code", "recipient.country.percentage"),",")
-new_names = setdiff(names(agg.split),original_names)
-agg.split.long = reshape(agg.split, varying=new_names, direction="long", sep="_")
-agg.split.long$transaction.value = as.numeric(agg.split.long$transaction.value)
-agg.split.long[ , `:=`( max_count = .N , count = 1:.N, sum_percent=sum(recipient.country.percentage, na.rm=T) ) , by = transaction.id ]
-agg.split.long=subset(agg.split.long, !is.na(recipient.country.code) | max_count==1 | count==1)
-agg.split.long$transaction.value.split=(agg.split.long$recipient.country.percentage/agg.split.long$sum_percent)*agg.split.long$transaction.value
-agg.split.long$transaction.value.split[which(is.na(agg.split.long$transaction.value.split))] = agg.split.long$transaction.value[which(is.na(agg.split.long$transaction.value.split))]
-agg.split.long$chad.transaction.value = agg.split.long$transaction.value.split
-agg.split.long[,c("transaction.value.split", "max_count", "count", "transaction.id", "id", "time", "sum_percent")] = NULL
-post = sum(agg.split.long$chad.transaction.value,na.rm=T)
-pre == post
-dagg = subset(agg.split.long,recipient.country.code %in% c("TD","TCD"))
-names(dagg) = gsub(".","_",names(dagg),fixed=T)
 write_excel_csv(dagg,"Past Spending_Chad_split_t_split_sector_edited_recode_qb.csv",na="")
