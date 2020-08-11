@@ -46,6 +46,47 @@ single_vocabulary = function(row){
   return(row)
 }
 
+org_id_imp = fread("../IATIOrganisationIdentifier.csv")
+org_id_imp = org_id_imp[,c("code","name")]
+names(org_id_imp) = c("ref","recode")
+
+implementers = function(row){
+  org_roles = as.character(row$participating_org_role)
+  org_narratives = as.character(row$participating_org_narrative)
+  org_types = as.character(row$participating_org_type)
+  org_refs = as.character(row$participating_org_ref)
+  
+  role_split = str_split(org_roles,",")[[1]]
+  narr_split = str_split(org_narratives,",")[[1]]
+  type_split = str_split(org_types,",")[[1]]
+  ref_split = str_split(org_refs,",")[[1]]
+  max_len = max(length(role_split),length(narr_split),length(type_split),length(ref_split))
+  if(length(role_split)<max_len){
+    lendiff = max_len - length(role_split)
+    role_split = c(role_split, rep("",lendiff))
+  }
+  if(length(narr_split)<max_len){
+    lendiff = max_len - length(narr_split)
+    narr_split = c(narr_split, rep("",lendiff))
+  }
+  if(length(type_split)<max_len){
+    lendiff = max_len - length(type_split)
+    type_split = c(type_split, rep("",lendiff))
+  }
+  if(length(ref_split)<max_len){
+    lendiff = max_len - length(ref_split)
+    ref_split = c(ref_split, rep("",lendiff))
+  }
+  row_df = data.frame(role=role_split,narr=narr_split,type=type_split,ref=ref_split)
+  row_df = subset(row_df,role=="4")
+  row_df = merge(row_df,org_id_imp,by="ref",all.x=T)
+  row_df$narr[which(is.na(row_df$narr))] = row_df$recode[which(is.na(row_df$narr))]
+  row$implementing_narrative = paste0(row_df$narr,collapse=",")
+  # row$implementing_type = paste0(row_df$type,collapse=",")
+  # row$implementing_ref = paste0(row_df$ref,collapse=",")
+  return(row)
+}
+
 # data_file = download.file(
 #   "https://iatidatastore.iatistandard.org/search/activity?q=recipient_country_code:(TD)&wt=xslt&tr=activity-csv.xsl&rows=5000",
 #   destfile="td_activities.csv"
@@ -158,41 +199,6 @@ sector_cats = sector_cats[,c("code","name")]
 names(sector_cats) = c("x_sector_cat_code","x_sector_cat_name")
 agg$x_sector_cat_code = as.numeric(substr(as.character(agg$x_sector_code),1,3))
 agg = merge(agg,sector_cats,by="x_sector_cat_code",all.x=T)
-
-implementers = function(row){
-  org_roles = as.character(row$participating_org_role)
-  org_narratives = as.character(row$participating_org_narrative)
-  org_types = as.character(row$participating_org_type)
-  org_refs = as.character(row$participating_org_ref)
-  
-  role_split = str_split(org_roles,",")[[1]]
-  narr_split = str_split(org_narratives,",")[[1]]
-  type_split = str_split(org_types,",")[[1]]
-  ref_split = str_split(org_refs,",")[[1]]
-  max_len = max(length(role_split),length(narr_split),length(type_split),length(ref_split))
-  if(length(role_split)<max_len){
-    lendiff = max_len - length(role_split)
-    role_split = c(role_split, rep("",lendiff))
-  }
-  if(length(narr_split)<max_len){
-    lendiff = max_len - length(narr_split)
-    narr_split = c(narr_split, rep("",lendiff))
-  }
-  if(length(type_split)<max_len){
-    lendiff = max_len - length(type_split)
-    type_split = c(type_split, rep("",lendiff))
-  }
-  if(length(ref_split)<max_len){
-    lendiff = max_len - length(ref_split)
-    ref_split = c(ref_split, rep("",lendiff))
-  }
-  row_df = data.frame(role=role_split,narr=narr_split,type=type_split,ref=ref_split)
-  row_df = subset(row_df,role=="4")
-  row$implementing_narrative = paste0(row_df$narr,collapse=",")
-  row$implementing_type = paste0(row_df$type,collapse=",")
-  row$implementing_ref = paste0(row_df$ref,collapse=",")
-  return(row)
-}
 
 dagg =  agg
 
