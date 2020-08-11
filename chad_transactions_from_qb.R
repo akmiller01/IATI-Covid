@@ -137,9 +137,9 @@ agg.split.long[ , `:=`( max_count = .N , count = 1:.N, sum_percent=sum(recipient
 agg.split.long=subset(agg.split.long, !is.na(recipient.country.code) | max_count==1 | count==1)
 agg.split.long$transaction.value.split=(agg.split.long$recipient.country.percentage/agg.split.long$sum_percent)*agg.split.long$transaction.value
 agg.split.long$transaction.value.split[which(is.na(agg.split.long$transaction.value.split))] = agg.split.long$transaction.value[which(is.na(agg.split.long$transaction.value.split))]
-agg.split.long$chad.transaction.value = agg.split.long$transaction.value.split
+agg.split.long$country.transaction.value = agg.split.long$transaction.value.split
 agg.split.long[,c("transaction.value.split", "max_count", "count", "transaction.id", "id", "time", "sum_percent")] = NULL
-post = sum(agg.split.long$chad.transaction.value,na.rm=T)
+post = sum(agg.split.long$country.transaction.value,na.rm=T)
 pre == post
 agg = subset(agg.split.long,recipient.country.code %in% c("TD","TCD"))
 names(agg) = gsub(".","_",names(agg),fixed=T)
@@ -152,7 +152,6 @@ agg$x_sector_vocabulary = as.character(agg$x_sector_vocabulary)
 agg$x_sector_vocabulary[which(is.na(agg$x_sector_code))] = agg$sector_vocabulary[which(is.na(agg$x_sector_code))]
 agg$x_sector_percentage[which(is.na(agg$x_sector_code))] = agg$sector_percentage[which(is.na(agg$x_sector_code))]
 agg$x_sector_code[which(is.na(agg$x_sector_code))] = agg$sector_code[which(is.na(agg$x_sector_code))]
-agg$transaction_value = as.numeric(agg$transaction_value)
 pre = sum(agg$transaction_value,na.rm=T)
 # Split by sector
 agg.sector = data.table(agg[,c("x_sector_code","x_sector_vocabulary","x_sector_percentage")])
@@ -174,9 +173,9 @@ agg.split.long$x.sector.percentage[which(is.na(agg.split.long$x.sector.code))] =
 agg.split.long[ , `:=`( max_count = .N , count = 1:.N, sum_percent=sum(x.sector.percentage, na.rm=T)) , by = .(transaction.id) ]
 agg.split.long=subset(agg.split.long, !is.na(x.sector.code) | max_count==1 | count==1)
 
-agg.split.long$transaction.value.split=(agg.split.long$x.sector.percentage/agg.split.long$sum_percent)*agg.split.long$transaction.value
-agg.split.long$transaction.value.split[which(is.na(agg.split.long$transaction.value.split))] = agg.split.long$transaction.value[which(is.na(agg.split.long$transaction.value.split))]
-agg.split.long$transaction.value = agg.split.long$transaction.value.split
+agg.split.long$transaction.value.split=(agg.split.long$x.sector.percentage/agg.split.long$sum_percent)*agg.split.long$country.transaction.value
+agg.split.long$transaction.value.split[which(is.na(agg.split.long$transaction.value.split))] = agg.split.long$country.transaction.value[which(is.na(agg.split.long$transaction.value.split))]
+agg.split.long$country.sector.transaction.value = agg.split.long$transaction.value.split
 setdiff(unique(agg.split.long$transaction.id),c(1:nrow(agg)))
 agg.split.long[,c("max_count", "count", "transaction.id", "id", "time", "transaction.value.split" ,"sum_percent")] = NULL
 
@@ -223,13 +222,11 @@ dagg$x_finance_type_code[which(is.na(dagg$x_finance_type_code))] = dagg$default_
 
 dagg_implementing = dagg[,c("participating_org_role","participating_org_narrative","participating_org_type","participating_org_ref")]
 dagg_implementing$implementing_narrative = NA
-dagg_implementing$implementing_type = NA
-dagg_implementing$implementing_ref = NA
 dagg_implementing = data.frame(dagg_implementing)
 for(i in 1:nrow(dagg_implementing)){
   dagg_implementing[i,] = implementers(dagg_implementing[i,])
 }
-dagg_implementing = cSplit(dagg_implementing,c("implementing_narrative", "implementing_type", "implementing_ref"),",")
+dagg_implementing = cSplit(dagg_implementing,c("implementing_narrative"),",")
 dagg_implementing[,c("participating_org_role","participating_org_narrative","participating_org_type","participating_org_ref")] = NULL
 dagg = cbind(dagg,dagg_implementing)
 
