@@ -79,6 +79,9 @@ agg = agg.split.long
 names(agg) = gsub(".","_",names(agg),fixed=T)
 write_excel_csv(agg,"Past Spending_Chad_split_t_qb.csv", na="")
 
+agg$transaction_value_date = anydate(agg$transaction_value_date)
+agg = subset(agg,transaction_value_date >= as.Date("2016-01-01"))
+
 agg$x_sector_code = as.character(agg$transaction_sector_code)
 agg$x_sector_vocabulary = agg$transaction_sector_vocabulary
 agg$x_sector_percentage = "100"
@@ -215,6 +218,10 @@ dagg$x_transaction_provider_org_recode = NULL
 
 # Split recipient country
 dagg$transaction_value = as.numeric(dagg$transaction_value)
+# Fix for massive recipient activity
+dagg$transaction_value[which(dagg$iati_identifier=="NO-BRC-980997278-970000")] = dagg$transaction_value[which(dagg$iati_identifier=="NO-BRC-980997278-970000")] * (0.699301/100)
+dagg$recipient_country_code[which(dagg$iati_identifier=="NO-BRC-980997278-970000")] = "TD"
+dagg$recipient_country_percentage[which(dagg$iati_identifier=="NO-BRC-980997278-970000")] = 100
 pre = sum(dagg$transaction_value,na.rm=T)
 dagg$transaction.id = c(1:nrow(dagg))
 names(dagg) = gsub("_",".",names(dagg))
