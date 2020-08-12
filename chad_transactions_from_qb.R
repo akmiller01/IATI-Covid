@@ -118,13 +118,14 @@ agg.split.long[,c("max_count", "count", "transaction.id", "id", "time")] = NULL
 
 agg = agg.split.long
 names(agg) = gsub(".","_",names(agg),fixed=T)
-write_excel_csv(agg,"Past Spending_Chad_split_t_qb.csv", na="")
-
 agg$transaction_value_date = anydate(agg$transaction_value_date)
 agg = subset(agg,transaction_value_date >= as.Date("2016-01-01"))
+agg$transaction_value = as.numeric(as.character(agg$transaction_value))
+write_excel_csv(agg,"Past Spending_Chad_split_t_qb.csv", na="")
+
+
 
 # Split recipient country
-agg$transaction_value = as.numeric(agg$transaction_value)
 pre = sum(agg$transaction_value,na.rm=T)
 agg$transaction.id = c(1:nrow(agg))
 names(agg) = gsub("_",".",names(agg))
