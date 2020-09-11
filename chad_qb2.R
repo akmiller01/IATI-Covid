@@ -53,8 +53,8 @@ trans <- read.table(
   stringsAsFactors=FALSE,
   flush=T
 )
-trans$transaction_value_date = anydate(trans$transaction_value_date)
-trans = subset(trans,transaction_value_date >= as.Date("2016-01-01"))
+trans$transaction_date_iso_date = anydate(trans$transaction_date_iso_date)
+trans = subset(trans,transaction_date_iso_date >= as.Date("2016-01-01"))
 write_excel_csv(trans,"td_transactions_utf8.csv",na="")
 
 search_terms = unique(trans$iati_identifier)
@@ -111,5 +111,45 @@ for(i in 1:nrow(agg_implementing)){
 agg_implementing = cSplit(agg_implementing,c("implementing_narrative"),",")
 agg_implementing[,c("participating_org_role","participating_org_narrative","participating_org_ref")] = NULL
 agg = cbind(agg,agg_implementing)
+
+agg$x_currency = agg$transaction_value_currency
+agg$x_currency[which(is.na(agg$x_currency))] = agg$default_currency[which(is.na(agg$x_currency))] 
+
+agg$x_aid_type_code = agg$transaction_aid_type_code
+agg$x_aid_type_code = as.character(agg$x_aid_type_code)
+agg$x_aid_type_vocabulary = agg$transaction_aid_type_vocabulary
+agg$x_aid_type_vocabulary = as.character(agg$x_aid_type_vocabulary)
+agg$x_aid_type_vocabulary[which(is.na(agg$x_aid_type_code))] = agg$default_aid_type_vocabulary[which(is.na(agg$x_aid_type_code))]
+agg$x_aid_type_code[which(is.na(agg$x_aid_type_code))] = agg$default_aid_type_code[which(is.na(agg$x_aid_type_code))]
+
+agg$x_finance_type_code = agg$transaction_finance_type_code
+agg$x_finance_type_code[which(is.na(agg$x_finance_type_code))] = agg$default_finance_type_code[which(is.na(agg$x_finance_type_code))]
+
+
+finance_types = fread("../FinanceType.csv")
+finance_types = finance_types[,c("code","name")]
+names(finance_types) = c("x_finance_type_code","x_finance_type_name")
+agg$x_finance_type_code = as.numeric(agg$x_finance_type_code)
+agg = merge(agg,finance_types,by="x_finance_type_code",all.x=T)
+
+aid_types = fread("../AidType.csv")
+aid_types = aid_types[,c("code","name")]
+names(aid_types) = c("x_aid_type_code","x_aid_type_name")
+agg$x_aid_type_code = as.character(gsub(",","",agg$x_aid_type_code))
+agg = merge(agg,aid_types,by="x_aid_type_code",all.x=T)
+
+sectors = fread("../Sector.csv")
+sectors = sectors[,c("code","name")]
+names(sectors) = c("transaction_sector_code","transaction_sector_name")
+agg$transaction_sector_code = as.numeric(gsub(",","",as.character(agg$transaction_sector_code)))
+agg$transaction_sector_vocabulary[which(is.na(agg$transaction_sector_code))] = 1
+agg$transaction_sector_code[which(is.na(agg$transaction_sector_code))] = 99810
+agg = merge(agg,sectors,all.x=T)
+
+ex_rates = fread("../ex_rates.csv")
+agg$year = as.numeric(substr(as.character(agg$transaction_date_iso_date),1,4))
+names(ex_rates) = c("year","x_currency","ex_rate")
+agg = merge(agg,ex_rates,by=c("year","x_currency"), all.x=T)
+agg$transaction_value_usd = agg$transaction_value * agg$ex_rate
 
 write_excel_csv(agg,"td_transactions_recode.csv",na="")

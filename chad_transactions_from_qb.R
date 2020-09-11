@@ -118,8 +118,12 @@ agg.split.long[,c("max_count", "count", "transaction.id", "id", "time")] = NULL
 
 agg = agg.split.long
 names(agg) = gsub(".","_",names(agg),fixed=T)
-agg$transaction_value_date = anydate(agg$transaction_value_date)
-agg = subset(agg,transaction_value_date >= as.Date("2016-01-01"))
+agg$transaction_date_iso_date = anydate(agg$transaction_date_iso_date)
+agg = subset(agg,transaction_date_iso_date >= as.Date("2016-01-01"))
+# agg_test = agg.split.long
+# names(agg_test) = gsub(".","_",names(agg_test),fixed=T)
+# agg_test$transaction_value_date = anydate(agg_test$transaction_value_date)
+# agg_test = subset(agg_test,transaction_value_date >= as.Date("2016-01-01"))
 agg$transaction_value = as.numeric(as.character(agg$transaction_value))
 write_excel_csv(agg,"Past Spending_Chad_split_t_qb.csv", na="")
 
@@ -248,5 +252,23 @@ names(org_id) = c("transaction_receiver_org_ref","x_transaction_receiver_org_rec
 dagg = merge(dagg,org_id,by="transaction_receiver_org_ref",all.x=T)
 dagg$x_transaction_receiver_org[which(is.na(dagg$x_transaction_receiver_org))] = dagg$x_transaction_receiver_org_recode[which(is.na(dagg$x_transaction_receiver_org))]
 dagg$x_transaction_receiver_org_recode = NULL
+
+finance_types = fread("../FinanceType.csv")
+finance_types = finance_types[,c("code","name")]
+names(finance_types) = c("x_finance_type_code","x_finance_type_name")
+dagg$x_finance_type_code = as.numeric(dagg$x_finance_type_code)
+dagg = merge(dagg,finance_types,by="x_finance_type_code",all.x=T)
+
+aid_types = fread("../AidType.csv")
+aid_types = aid_types[,c("code","name")]
+names(aid_types) = c("x_aid_type_code","x_aid_type_name")
+dagg$x_aid_type_code = as.character(gsub(",","",dagg$x_aid_type_code))
+dagg = merge(dagg,aid_types,by="x_aid_type_code",all.x=T)
+
+ex_rates = fread("../ex_rates.csv")
+dagg$year = as.numeric(substr(as.character(dagg$transaction_date_iso_date),1,4))
+names(ex_rates) = c("year","x_currency","ex_rate")
+dagg = merge(dagg,ex_rates,by=c("year","x_currency"), all.x=T)
+dagg$country_sector_transaction_value_usd = dagg$country_sector_transaction_value * dagg$ex_rate
 
 write_excel_csv(dagg,"Past Spending_Chad_split_t_split_sector_edited_recode_qb.csv",na="")
