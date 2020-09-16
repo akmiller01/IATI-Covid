@@ -62,5 +62,8 @@ proj4string(coords) = proj4string(td)
 over_dat = over(coords,td)
 coords$adm1 = over_dat$admin1Name
 
+plot(td)
 td_coords = subset(coords,!is.na(adm1))
+points(td_coords)
+
 fwrite(data.frame(td_coords),"td_coords.csv")
