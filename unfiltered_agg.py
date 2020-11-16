@@ -11,11 +11,14 @@ with open('ex_rates.json') as f:
 
 ratedf["GPB"] = ratedf["GBP"]
 ratedf["gbp"] = ratedf["GBP"]
+ratedf["GBP-PoundSterling"] = ratedf["GBP"]
 ratedf["EURO"] = ratedf["EUR"]
 ratedf["Euro"] = ratedf["EUR"]
 ratedf["Eur"] = ratedf["EUR"]
+ratedf["EUR-Euro"] = ratedf["EUR"]
 ratedf["CDN"] = ratedf["CAD"]
 ratedf["usd"] = ratedf["USD"]
+ratedf["USD-USDollar"] = ratedf["USD"]
 ratedf["GHC"] = ratedf["GHS"]
 ratedf["ZMK"] = ratedf["ZMW"]
 ratedf["USS"] = ratedf["USD"]
@@ -27,6 +30,7 @@ ratedf["GIP"] = ratedf["GBP"]
 ratedf["FKP"] = ratedf["GBP"]
 ratedf["AON"] = ratedf["AOA"]
 ratedf["UYI"] = ratedf["UYU"]
+ratedf["CHF-SwissFranc"] = ratedf["CHF"]
 ratedf["NUL"] = {"2000": 0}
 
 

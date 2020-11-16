@@ -63,10 +63,10 @@ near_covid = subset(
 near_covid_activities = unique(near_covid$iati_identifier)
 new_ids = setdiff(near_covid_activities,covid_related_activities)
 length(new_ids)
-keep = c("iati_identifier","publisher","year","transaction_date","activity_title","activity_description","transaction_description_narrative",
+keep = c("iati_identifier","reporting_org_name","year","transaction_date","activity_title","activity_description","transaction_description_narrative",
          "humanitarian_scope_code", "humanitarian_scope_narrative","tag_code","tag_narrative"
          )
-keep.act = c("iati_identifier","publisher","activity_title","activity_description",
+keep.act = c("iati_identifier","reporting_org_name","activity_title","activity_description",
              "humanitarian_scope_code", "humanitarian_scope_narrative","tag_code","tag_narrative"
 )
 keep.act.trans = c("iati_identifier","transaction_type","usd_disbursement"
@@ -86,7 +86,10 @@ fwrite(covid_related_activities,"covid_related_activities.csv")
 
 # BASIC QUESTIONS
 # Which IATI publishers are currently publishing COVID-19 related activities/transactions? Which elements are they using?
-covid_publishers = unique(covid_related$publisher)
+iati_publishers = fread("../iati_publishers_list.csv")
+iati_publishers = unique(iati_publishers[,c("publisher","IATI Organisation Identifier")])
+setnames(iati_publishers,"IATI Organisation Identifier","reporting_org_ref")
+covid_publishers = unique(covid_related$reporting_org_name)
 covid_publishers = covid_publishers[order(covid_publishers)]
 covid_publishers
 #   Free text - activity title
@@ -115,8 +118,9 @@ using_tab = covid_related[,.(
   using_glide = any(using_glide),
   using_appeal = any(using_appeal),
   using_tag = any(using_tag)
-),by=.(publisher)]
+),by=.(reporting_org_ref)]
 using_tab$using_any = T
+using_tab = merge(iati_publishers,using_tab,by="reporting_org_ref",all.y=T,sort=F)
 fwrite(using_tab,"using_tab.csv")
 # Which countries is COVID-19 funding going to? (assess number of activities per recipient country)
 countries_tab = covid_related[,.(activity_count=length(unique(.SD$iati_identifier))),by=.(recipient_country_codes)]
@@ -125,6 +129,8 @@ fwrite(countries_tab,"countries_tab.csv",na="")
 members = fread("../members.csv")
 members = subset(members,publisher!="")
 members = members[,c("Name","publisher")]
+members = merge(iati_publishers,members,by="publisher",sort=F)
+members$reporting_org_ref = NULL
 setnames(members,"Name","publisher_name")
 members = merge(members,using_tab,all.x=T)
 members$using_title[which(is.na(members$using_title))] = FALSE
