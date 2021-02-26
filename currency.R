@@ -5,9 +5,10 @@ lapply(list.of.packages, require, character.only=T)
 
 setwd("~/git/IATI-Covid")
 
-dat <- fread("https://www.imf.org/external/pubs/ft/weo/2019/02/weodata/WEOOct2019all.xls",sep="\t",na.strings=c("","n/a","--"),check.names=T)
+dat <- read.csv("WEOOct2020all.xls",sep="\t",na.strings=c("","n/a","--"),fileEncoding='utf-16',check.names=T)
+dat = data.table(dat)
 dat = subset(dat,WEO.Subject.Code %in% c("NGDP","NGDPD"))
-keep = c("ISO","Country","Units",paste0("X",1980:2024))
+keep = c("ISO","Country","Units",paste0("X",1980:2025))
 dat = dat[,keep,with=F]
 
 mdat <- melt(dat,id.vars=c("ISO","Country","Units"))
@@ -45,10 +46,6 @@ wdat = rbind(wdat,xdr,fill=T)
 
 wdat = wdat[order(wdat$cc,wdat$year),]
 
-# grid.2030 = expand.grid(cc=unique(wdat$cc),year=c(1980:2030))
-# wdat = merge(wdat,grid.2030,all=T)
-# wdat$ex.rate[which(is.na(wdat$ex.rate))] = 0
-
 ex_list = list()
 
 for(this.cc in unique(wdat$cc)){
@@ -60,7 +57,7 @@ for(this.cc in unique(wdat$cc)){
   ex_list[[this.cc]] = sub_list
 }
 
-
 ex_json  = toJSON(ex_list, auto_unbox=T)
 write(ex_json,"ex_rates.json")
+
 fwrite(wdat[,c("year","cc","ex.rate"),with=F],"ex_rates.csv")
